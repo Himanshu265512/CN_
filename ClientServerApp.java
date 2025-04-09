@@ -4,7 +4,6 @@ import java.net.*;
 import javax.swing.*;
 
 public class ClientServerApp {
-    private static final int PORT = 12346; 
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
     private static JFrame waitingFrame;
@@ -67,11 +66,12 @@ public class ClientServerApp {
     private static void startServer(JFrame oldFrame) {
         new Thread(() -> {
             try {
-                serverSocket = new ServerSocket(PORT);
+                serverSocket = new ServerSocket(0); // Pick an available port
+                int assignedPort = serverSocket.getLocalPort();
                 String ipAddress = getLocalIPAddress();
-                showWaitingWindow(oldFrame, ipAddress, PORT);
+                showWaitingWindow(oldFrame, ipAddress, assignedPort);
 
-                clientSocket = serverSocket.accept();  // Wait for client
+                clientSocket = serverSocket.accept(); // Wait for client
                 SwingUtilities.invokeLater(() -> {
                     statusLabel.setText("Client Connected!");
                     disconnectButton.setVisible(true);
@@ -82,6 +82,30 @@ public class ClientServerApp {
             }
         }).start();
     }
+    private static void runCommand(String[] command) {
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.inheritIO(); // Redirects output to console
+            processBuilder.start();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+    private static void disconnectClient() {
+        try {
+            if (clientSocket != null && !clientSocket.isClosed()) {
+                clientSocket.close();
+            }
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+            statusLabel.setText("Server Disconnected");
+            disconnectButton.setVisible(false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
 
     private static void showWaitingWindow(JFrame oldFrame, String ip, int port) {
         SwingUtilities.invokeLater(() -> {
@@ -136,36 +160,11 @@ public class ClientServerApp {
         });
     }
 
-    private static void disconnectClient() {
-        try {
-            if (clientSocket != null) {
-                clientSocket.close();
-            }
-            if (serverSocket != null) {
-                serverSocket.close();
-            }
-            statusLabel.setText("Server Disconnected");
-            disconnectButton.setVisible(false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private static String getLocalIPAddress() {
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             return "Unknown";
-        }
-    }
-
-    private static void runCommand(String[] command) {
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            processBuilder.inheritIO();
-            processBuilder.start();
-        } catch (IOException ex) {
-            ex.printStackTrace();
         }
     }
 }
