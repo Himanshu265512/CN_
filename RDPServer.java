@@ -10,9 +10,9 @@ public class RDPServer {
 
     public void start() {
         try {
-            int port = Config.DEFAULT_PORT;
-            serverSocket = new ServerSocket(port);
-            System.out.println("Server started on port " + port);
+            serverSocket = new ServerSocket(0); // Let Java assign an available port
+            int assignedPort = serverSocket.getLocalPort(); // Get assigned port
+            System.out.println("Server started on port " + assignedPort);
 
             screenCapture = new ScreenCapture();
             networkHandler = new NetworkHandler(serverSocket.accept());
